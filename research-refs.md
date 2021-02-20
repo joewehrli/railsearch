@@ -26,9 +26,13 @@ https://github.com/rpreen/xcsf
 - XCS algo description 
 https://www.researchgate.net/publication/2937494_An_Algorithmic_Description_of_XCS
 
--XCS in python
+- XCS in python
 https://pypi.org/project/scikit-XCS/
 
+- and/or in contraints
+https://www.ics.uci.edu/~csp/r119.pdf
+https://cs.nyu.edu/courses/spring01/G22.2560-001/andor.html
+https://www.researchgate.net/publication/224506735_A_Survey_on_Maintaining_Binary_Search_Tree_in_Optimal_Shape
 
 - LCS learning classifier systems (spirit of holland)
 https://arxiv.org/ftp/arxiv/papers/1401/1401.3607.pdf

@@ -3,8 +3,7 @@
 #[cfg(foo)]
 const MAX_RECORDS: usize = 800_000_000;
 
-// 1 Billion calls to test/test2 with 100,000 x 10,000
-const MAX_RECORDS: usize = 100_000;
+const MAX_RECORDS: usize = 50_000;
 const MAX_QUERIES: usize = 10_000;
 
 const MAX_FLAGS: usize = 10;
