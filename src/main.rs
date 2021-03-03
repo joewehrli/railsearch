@@ -3,6 +3,8 @@ mod lib;
 
 use devtimer::DevTime;
 
+use crate::lib::trie_test;
+
 use crate::lib::queryterm1;
 use crate::lib::queryterm2;
 use crate::lib::queryterm3;
@@ -24,9 +26,13 @@ use crate::lib::model5;
 
 fn main() {
 
-    println!("queries");
-    run_queryterm_setup_timings();
+    println!("tries");
+    trie_test();
     println!("");
+
+    // println!("queries");
+    // run_queryterm_setup_timings();
+    //println!("");
 
 /*
     if true {
@@ -43,7 +49,7 @@ fn main() {
 */
 }
 
-fn run_queryterm_setup_timings() {
+fn _run_queryterm_setup_timings() {
     
     let mut timer = DevTime::new_simple();
 

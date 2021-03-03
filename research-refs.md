@@ -11,6 +11,30 @@ https://www.forrestthewoods.com/blog/how-to-debug-rust-with-visual-studio-code/
 - lib for vscode debugging
 https://github.com/vadimcn/vscode-lldb/blob/v1.6.1/MANUAL.md#rust-language-support
 
+- rust and the compile - mental models
+https://medium.com/@orbitalK/why-the-machine-b9803a77fa29
+
+- trie handbook
+https://users.dcc.uchile.cl/~rbaeza/handbook/algs/3/344.ins.c.html
+
+
+- trees/dicts for the cause
+https://docs.rs/trie-rs/0.1.1/trie_rs/
+https://crates.io/crates/louds-rs
+https://docs.rs/fid-rs/0.1.1/fid_rs/
+http://www.eecs.tufts.edu/~aloupis/comp150/projects/SuccinctTreesinPractice.pdf
+    - very nice course lecture videos for advanced data structures
+    https://courses.csail.mit.edu/6.851/spring12/lectures/
+https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.538.8528&rep=rep1&type=pdf
+https://medium.com/@brunoosiek/patricia-tries-nuts-and-bolts-170a317b3ab6
+
+- nice course on parallel for ML
+http://15418.courses.cs.cmu.edu/tsinghua2017/
+
+
+- VERY NICE site on info organization
+http://sungsoo.github.io/
+
 - AI the book
 http://aima.cs.berkeley.edu/
 

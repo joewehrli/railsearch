@@ -8,6 +8,179 @@ const MAX_QUERIES: usize = 10_000;
 
 const MAX_FLAGS: usize = 10;
 
+// a sequence of signed integers is the key
+// seq 1,2,5 represents the rule/query body Pn if r1,r2,r5 
+//  where r1,r2,r5 are boolean condition tests of T or F applied 
+//      to the datarow d1,d2,..,d5,,..dmax,  items not referenced by rule like d3 d4 ... are don't care conditions.. and are not in the sequence
+//      n indicates the the nth predicate rN is true, -n indicates the predicate rN is false
+//      -n implements negation of nth boolean variable in the data and equivalently expression negation to the term not(rN)
+// valid rules in sequence are <-128, 127>
+#[derive(PartialEq, Eq, Clone, Copy)]
+struct RuleMashTrieKey{
+    seq :[i8; MAX_FLAGS]
+}
+
+// a trie like structure that mashes together business rules for mashed evaluation
+struct RuleMashTrie {
+    null_structure : bool, 
+    data_structure : bool, 
+    rule_xref : Vec<usize>, 
+    k : RuleMashTrieKey,
+    //MAX_FLAGS = alphabet of size 10; 10 means rules <1,10> with index <0,9>
+    children : Vec<RuleMashTrie>
+}
+
+impl RuleMashTrie {
+    fn new() -> Self {
+
+        let s = [0; MAX_FLAGS];
+        let x = RuleMashTrieKey {seq :s };
+
+        RuleMashTrie { 
+            null_structure : true,
+            data_structure : true,
+            rule_xref : Vec::new(),
+            k : x,
+            children: Vec::new()
+          }
+    }
+
+/*
+trie insert( key, t, depth )
+	typekey key;
+	trie t;
+	int depth;
+
+	{
+	int j;
+	trie t1;
+	if ( t==NULL )	return( NewDataNode(key) );
+	if ( IsData(t) )
+		if (t->k == key)
+			Error /*** Key already in table ***/;
+		else {	t1 = NewIntNode();
+			t1->p[ charac(depth,t->k) ] = t;
+			t = insert( key, t1, depth );
+			}
+	else  { j = charac(depth,key);
+		t->p[j] = insert( key, t->p[j], depth+1 );
+		}
+	return( t );
+	}
+*/
+    //returning Tree by value is not the desire here
+
+    fn insert(key: &RuleMashTrieKey, trie: &mut RuleMashTrie, depth: usize, rule_id : usize) -> RuleMashTrie {
+        type T = RuleMashTrie;
+
+        if T::is_null(trie)	{
+            // make_new_data_node
+            let mut trie_root : T = T::new();
+            trie_root.null_structure=false;
+            trie_root.k = *key;
+            trie_root.data_structure = true;
+            trie_root.rule_xref.push(rule_id);
+            return trie_root;
+        }
+
+        if T::is_data(trie) {
+            if trie.k == *key {
+                // Key already in table push new ruleid
+                trie.rule_xref.push(rule_id);
+                return T::new();
+            }
+            else{
+                // make_new_interior_node
+                return T::new();
+            }
+        }
+        else {
+            // walk more
+            let j : usize = T::charac(depth, key) as usize;
+            let nextsubtree = &mut trie.children[j];
+            let subtree = T::insert(key, nextsubtree, depth, rule_id);
+            trie.children[j] = subtree;
+            return trie; // how to return this?
+        }
+    }
+/*
+search( key, t )
+	typekey key;
+	trie t;
+
+	{
+	int depth;
+	for( depth=1; t!=NULL && !IsData(t); depth++ )
+		t = t->p[ charac(depth,key) ];
+	if( t != NULL && key == t->k )
+		found( t );
+	else	notfound( key );
+	}
+*/
+    fn search (key: &RuleMashTrieKey, trie: &RuleMashTrie){
+        let mut depth: usize = 1;
+        type T = RuleMashTrie;
+        let mut trie_walk : &T = trie;
+        while !T::is_null(trie) && !T::is_data(trie) {
+            let next_index : usize= T::charac(depth, key) as usize;
+            trie_walk = &trie_walk.children[next_index];
+            depth = depth + 1;
+        }
+        if !T::is_null(trie) && key == &trie.k {
+                T::found( trie );
+        }
+        else {
+            T::notfound(key);
+        }
+    }
+
+    fn charac(depth: usize, key: &RuleMashTrieKey) -> i8{
+        assert!(depth>0);
+        let idx = depth-1;
+        let val = key.seq[idx];
+        return val;
+    }
+
+    fn is_null(trie: &RuleMashTrie) -> bool {
+        return trie.null_structure;
+    }
+
+    fn is_data(trie: &RuleMashTrie) -> bool {
+        return trie.data_structure;
+    }
+
+    fn found (_trie: &RuleMashTrie) {
+        println!("Search key FOUND");
+    }
+    fn notfound (_key: &RuleMashTrieKey) {
+        println!("Search key NOT FOUND");
+    }
+
+    /*
+    fn make_node() -> RuleMashTrie {
+        let child_vec: Vec<RuleMashTrie> = vec![query_terms_init; MAX_QUERIES];
+        let mut node = RuleMashTrie {
+            predicate_index : 0,
+            children: Vec::new()
+        }
+    }
+*/
+
+}
+
+pub fn trie_test() {
+
+    type T = RuleMashTrie;
+
+    let t = T::new();
+
+    let mut s = [0; MAX_FLAGS];
+    s[0]=1;
+    let k = RuleMashTrieKey {seq :s };
+
+    T::search(&k, &t);
+}
+
 
 // simple FIXED bool record layout
 // later internal optimization -  bitwise ops - 256x more storage
