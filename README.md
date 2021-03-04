@@ -13,4 +13,8 @@ adds and to compile
 completed search
 insert in progress
 
-
+2021-03-04
+made insert compile
+added print
+insert has infinite loop
+checked in with this

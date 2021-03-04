@@ -15,12 +15,13 @@ const MAX_FLAGS: usize = 10;
 //      n indicates the the nth predicate rN is true, -n indicates the predicate rN is false
 //      -n implements negation of nth boolean variable in the data and equivalently expression negation to the term not(rN)
 // valid rules in sequence are <-128, 127>
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 struct RuleMashTrieKey{
     seq :[i8; MAX_FLAGS]
 }
 
 // a trie like structure that mashes together business rules for mashed evaluation
+#[derive(Clone)]
 struct RuleMashTrie {
     null_structure : bool, 
     data_structure : bool, 
@@ -45,6 +46,69 @@ impl RuleMashTrie {
           }
     }
 
+    fn set_data_node(key: &RuleMashTrieKey, trie: &mut RuleMashTrie, rule_id : usize){
+        trie.null_structure=false;
+        trie.data_structure = true;
+        trie.k = *key;
+        trie.rule_xref.push(rule_id);
+    }
+
+    fn set_interior_node(trie: &mut RuleMashTrie){
+        trie.null_structure=false;
+        trie.data_structure = true;
+        //trie.k = *key;
+        let new_mash = RuleMashTrie::new();
+        trie.children = vec![new_mash; MAX_FLAGS];
+    }
+
+    fn copy_node(trie: &mut RuleMashTrie, triecopy: &mut RuleMashTrie) {
+        triecopy.null_structure=trie.null_structure;
+        triecopy.data_structure = trie.data_structure;
+        triecopy.k = trie.k;
+        triecopy.children = trie.children.clone(); 
+        triecopy.rule_xref = trie.rule_xref.clone(); 
+    }
+/*
+void print_trie(TrieNode* root) {
+    // Prints the nodes of the trie
+    if (!root)
+        return;
+    TrieNode* temp = root;
+    printf("%c -> ", temp->data);
+    for (int i=0; i<N; i++) {
+        print_trie(temp->children[i]); 
+    }
+}
+*/
+
+fn print (trie: &RuleMashTrie, depth: usize){
+    type T = RuleMashTrie;
+
+    if T::is_null(trie) {
+        println!("Null:{}", depth);
+        println!("");
+        return;
+    }
+
+    if T::is_data(trie) {
+        println!("Data:");
+        println!("Depth= {}", depth);
+        let stuff_str = format!("{:?}", trie.k);
+        println!("Key= {}", stuff_str);
+        let stuff_str = format!("{:?}", trie.rule_xref);
+        println!("rule-ids= {}", stuff_str);
+        println!("");
+    }
+    else {
+        let mut i = 0;
+        while i < MAX_FLAGS {
+            T::print( &trie.children[i], depth + 1 );
+            i = i + 1;
+        }
+    }
+    return;
+}
+
 /*
 trie insert( key, t, depth )
 	typekey key;
@@ -68,9 +132,44 @@ trie insert( key, t, depth )
 	return( t );
 	}
 */
+
+    fn insert(key: &RuleMashTrieKey, trie: &mut RuleMashTrie, depth: usize, rule_id : usize) {
+        type T = RuleMashTrie;
+
+        if T::is_null(trie)	{
+            T::set_data_node(key,trie,rule_id);
+            return;
+        }
+
+        if T::is_data(trie) {
+            if trie.k == *key {
+                // Key already in table push new ruleid
+                trie.rule_xref.push(rule_id);
+            }
+            else {
+                let mut trie1 = T::new();
+                T::set_interior_node(&mut trie1);
+                let j : usize = T::charac(depth, &trie.k) as usize;
+                //trie1.children [j] = *trie;
+                T::copy_node(trie, & mut trie1.children[j]);//suboptimal
+                T::insert(key, &mut trie1, depth, rule_id);
+                //trie=trie1;
+                T::copy_node(& mut trie1,trie);//suboptimal
+            }
+        }
+        else {
+            // walk more
+            let j : usize = T::charac(depth, key) as usize;
+            let nextsubtree = &mut trie.children[j];
+            T::insert(key, nextsubtree, depth + 1, rule_id);
+        }
+        //return trie - implicit via mut arg
+        return;
+    }
+
     //returning Tree by value is not the desire here
 
-    fn insert(key: &RuleMashTrieKey, trie: &mut RuleMashTrie, depth: usize, rule_id : usize) -> RuleMashTrie {
+    fn insert2(key: &RuleMashTrieKey, trie: &mut RuleMashTrie, depth: usize, rule_id : usize) -> RuleMashTrie {
         type T = RuleMashTrie;
 
         if T::is_null(trie)	{
@@ -98,9 +197,10 @@ trie insert( key, t, depth )
             // walk more
             let j : usize = T::charac(depth, key) as usize;
             let nextsubtree = &mut trie.children[j];
-            let subtree = T::insert(key, nextsubtree, depth, rule_id);
-            trie.children[j] = subtree;
-            return trie; // how to return this?
+            let _subtree = T::insert(key, nextsubtree, depth, rule_id);
+            //trie.children[j] = subtree;
+            //return trie; // how to return this?
+            return T::new();
         }
     }
 /*
@@ -149,36 +249,62 @@ search( key, t )
         return trie.data_structure;
     }
 
-    fn found (_trie: &RuleMashTrie) {
+    fn found (trie: &RuleMashTrie) {
         println!("Search key FOUND");
+        let stuff_str = format!("{:?}", trie.k);
+        println!("key: {}", stuff_str);
+        let stuff_str = format!("{:?}", trie.rule_xref);
+        println!("Rule-ids= {}", stuff_str);
+        println!("");
     }
-    fn notfound (_key: &RuleMashTrieKey) {
-        println!("Search key NOT FOUND");
+    fn notfound (key: &RuleMashTrieKey) {
+        println!("Search key NOT FOUND:");
+        let stuff_str = format!("{:?}", key);
+        println!("Key= {}", stuff_str);
+        println!("");
     }
 
-    /*
-    fn make_node() -> RuleMashTrie {
-        let child_vec: Vec<RuleMashTrie> = vec![query_terms_init; MAX_QUERIES];
-        let mut node = RuleMashTrie {
-            predicate_index : 0,
-            children: Vec::new()
-        }
-    }
-*/
-
-}
+} //end impl RuleMastTrie
 
 pub fn trie_test() {
 
     type T = RuleMashTrie;
 
-    let t = T::new();
+    let mut t = T::new();
 
     let mut s = [0; MAX_FLAGS];
-    s[0]=1;
+    s[0]=2;
     let k = RuleMashTrieKey {seq :s };
 
     T::search(&k, &t);
+
+    let mut rule_id = 1;
+    T::insert(&k, &mut t, 1, rule_id);
+
+
+    T::search(&k, &t);
+
+    rule_id = 2;
+    T::insert(&k, &mut t, 1, rule_id);
+
+    T::search(&k, &t);
+    
+    T::print(&t, 1);
+    
+
+    s[0]=1;
+    let k2 = RuleMashTrieKey {seq :s };
+    T::search(&k2, &t);
+
+    println!("insert rule 3");
+    rule_id = 3;
+    T::insert(&k2, &mut t, 1, rule_id);
+    T::search(&k2, &t);
+
+    rule_id = 4;
+    T::insert(&k2, &mut t, 1, rule_id);
+    T::search(&k2, &t);
+
 }
 
 

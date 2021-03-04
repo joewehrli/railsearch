@@ -31,6 +31,8 @@ https://medium.com/@brunoosiek/patricia-tries-nuts-and-bolts-170a317b3ab6
 - nice course on parallel for ML
 http://15418.courses.cs.cmu.edu/tsinghua2017/
 
+- geometric algorithms card nice
+https://www.cs.princeton.edu/courses/archive/fall05/cos226/lectures/geosearch.pdf
 
 - VERY NICE site on info organization
 http://sungsoo.github.io/
