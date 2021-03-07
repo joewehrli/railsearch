@@ -1,5 +1,10 @@
 #![allow(dead_code)]
 
+#[path = "util.rs"]
+mod util;
+
+use crate::util::SemanticProducer;
+
 #[cfg(foo)]
 const MAX_RECORDS: usize = 800_000_000;
 
@@ -7,6 +12,18 @@ const MAX_RECORDS: usize = 50_000;
 const MAX_QUERIES: usize = 10_000;
 
 const MAX_FLAGS: usize = 10;
+
+
+macro_rules! log56 {
+    ( $( $x:expr, $y:expr ), *) => {
+        {
+            $(
+                crate::util::SemanticProducer::pad56(&mut $y);
+                crate::util::SemanticProducer::produce56($x, $y.as_bytes());
+            )*
+        }
+    };    
+}
 
 // a sequence of signed integers is the key
 // seq 1,2,5 represents the rule/query body Pn if r1,r2,r5 
@@ -39,13 +56,15 @@ impl RuleMashTrie {
 
         RuleMashTrie { 
             null_structure : true,
-            data_structure : true,
+            data_structure : false,
             rule_xref : Vec::new(),
             k : x,
             children: Vec::new()
           }
     }
 
+
+    
     fn set_data_node(key: &RuleMashTrieKey, trie: &mut RuleMashTrie, rule_id : usize){
         trie.null_structure=false;
         trie.data_structure = true;
@@ -55,7 +74,7 @@ impl RuleMashTrie {
 
     fn set_interior_node(trie: &mut RuleMashTrie){
         trie.null_structure=false;
-        trie.data_structure = true;
+        trie.data_structure = false;
         //trie.k = *key;
         let new_mash = RuleMashTrie::new();
         trie.children = vec![new_mash; MAX_FLAGS];
@@ -68,6 +87,19 @@ impl RuleMashTrie {
         triecopy.children = trie.children.clone(); 
         triecopy.rule_xref = trie.rule_xref.clone(); 
     }
+
+    fn print_node (trie: &RuleMashTrie){
+        println!("BGN print_node()");
+        let stuff_str = format!("{:?}", trie.k);
+        println!("key: {}", stuff_str);
+        let stuff_str = format!("{:?}", trie.rule_xref);
+        println!("Rule-ids= {}", stuff_str);
+        println!("null_structure= {}", trie.null_structure);
+        println!("data_structure= {}", trie.data_structure);
+        println!("END print_node()");
+        println!("");
+    }
+
 /*
 void print_trie(TrieNode* root) {
     // Prints the nodes of the trie
@@ -82,10 +114,11 @@ void print_trie(TrieNode* root) {
 */
 
 fn print (trie: &RuleMashTrie, depth: usize){
+    println!("BGN print ({})", depth);
     type T = RuleMashTrie;
 
     if T::is_null(trie) {
-        println!("Null:{}", depth);
+        println!("Null - END print ({})", depth);
         println!("");
         return;
     }
@@ -97,7 +130,6 @@ fn print (trie: &RuleMashTrie, depth: usize){
         println!("Key= {}", stuff_str);
         let stuff_str = format!("{:?}", trie.rule_xref);
         println!("rule-ids= {}", stuff_str);
-        println!("");
     }
     else {
         let mut i = 0;
@@ -106,8 +138,98 @@ fn print (trie: &RuleMashTrie, depth: usize){
             i = i + 1;
         }
     }
+    println!("END print ({})", depth);
+    println!("");
     return;
 }
+
+/*
+// If not present, inserts key into trie 
+// If the key is prefix of trie node, just 
+// marks leaf node 
+void insert(struct TrieNode *root, string key) 
+{ 
+    struct TrieNode *pCrawl = root; 
+  
+    for (int i = 0; i < key.length(); i++) 
+    { 
+        int index = key[i] - 'a'; 
+        if (!pCrawl->children[index]) 
+            pCrawl->children[index] = getNode(); 
+  
+        pCrawl = pCrawl->children[index]; 
+    } 
+  
+    // mark last node as leaf 
+    pCrawl->isEndOfWord = true; 
+} 
+*/
+
+    fn insert(sp: &mut SemanticProducer, key: &RuleMashTrieKey, trie: &mut RuleMashTrie, depth: usize, rule_id : usize) {
+        type T = RuleMashTrie;
+        //log
+        let k = format!("{:?}", key.seq);
+        let r = format!("Q{} IF ", rule_id);
+        let mut evt = String::from("ADD-RULE: ");
+        evt.push_str(&r);
+        evt.push_str(&k);
+        log56!(sp, evt);
+
+
+        let mut trie1 = trie;
+        let mut depth = depth;
+
+        if T::is_null(&trie1) {
+            let new_mash = RuleMashTrie::new();
+            trie1.children = vec![new_mash; MAX_FLAGS];
+            trie1.rule_xref.push(0);
+            trie1.null_structure=false;
+            //log
+            let mut evt = String::from("INFO: Empty tree");
+            log56!(sp, evt);
+        }
+
+        //log
+        let mut evt = String::from("INFO: Begin key loop");
+        log56!(sp,evt);
+
+        let mut i = 0;
+        while i < MAX_FLAGS {
+            let idx : usize = T::charac(depth, key) as usize;
+            if idx==0 {
+                //log
+                let mut evt = format!("INFO: Exit key loop;terminal key idx={} dep={}", idx, depth);
+                log56!(sp, evt);
+
+                break;//end key
+            }
+            //log
+            let mut looper = format!("INFO: newloop of key loop idx={} dep={}", idx, depth);
+            log56!(sp, looper);
+
+            if T::is_null(&trie1.children[idx]){
+                //log
+                let mut intnode = format!("INFO: node null; new INT CHILD w/idx={}", idx);
+                log56!(sp, intnode);
+
+                T::set_interior_node(&mut trie1.children[idx]);
+            }
+            let mut movedeep = format!("INFO: move search to INT CHILD at idx={} dep={}", idx, depth);
+            log56!(sp, movedeep);
+            trie1 = &mut trie1.children[idx];
+            depth = depth + 1;
+            i = i + 1;
+        }
+        let mut loopdone = format!("INFO: loop done dep={}", depth);
+        log56!(sp, loopdone);
+
+        trie1.null_structure=false;
+        trie1.data_structure=true;
+        trie1.rule_xref.push(rule_id);
+        trie1.k = *key;
+        let mut loopdone2 = format!("INFO: set data node dep={} rule={}", depth, rule_id);
+        log56!(sp, loopdone2);
+    }
 
 /*
 trie insert( key, t, depth )
@@ -133,7 +255,8 @@ trie insert( key, t, depth )
 	}
 */
 
-    fn insert(key: &RuleMashTrieKey, trie: &mut RuleMashTrie, depth: usize, rule_id : usize) {
+    fn insert3(key: &RuleMashTrieKey, trie: &mut RuleMashTrie, depth: usize, rule_id : usize) {
+        let mut sp = SemanticProducer::new();
         type T = RuleMashTrie;
 
         if T::is_null(trie)	{
@@ -151,8 +274,11 @@ trie insert( key, t, depth )
                 T::set_interior_node(&mut trie1);
                 let j : usize = T::charac(depth, &trie.k) as usize;
                 //trie1.children [j] = *trie;
+                //move data node (contents) to properly indexed place in children array
                 T::copy_node(trie, & mut trie1.children[j]);//suboptimal
-                T::insert(key, &mut trie1, depth, rule_id);
+                //T::insert(key, &mut trie1, depth, rule_id);
+                trie1.k = key.clone();
+                
                 //trie=trie1;
                 T::copy_node(& mut trie1,trie);//suboptimal
             }
@@ -161,7 +287,7 @@ trie insert( key, t, depth )
             // walk more
             let j : usize = T::charac(depth, key) as usize;
             let nextsubtree = &mut trie.children[j];
-            T::insert(key, nextsubtree, depth + 1, rule_id);
+            T::insert(&mut sp, key, nextsubtree, depth + 1, rule_id);
         }
         //return trie - implicit via mut arg
         return;
@@ -170,6 +296,7 @@ trie insert( key, t, depth )
     //returning Tree by value is not the desire here
 
     fn insert2(key: &RuleMashTrieKey, trie: &mut RuleMashTrie, depth: usize, rule_id : usize) -> RuleMashTrie {
+        let mut sp = SemanticProducer::new();
         type T = RuleMashTrie;
 
         if T::is_null(trie)	{
@@ -197,12 +324,67 @@ trie insert( key, t, depth )
             // walk more
             let j : usize = T::charac(depth, key) as usize;
             let nextsubtree = &mut trie.children[j];
-            let _subtree = T::insert(key, nextsubtree, depth, rule_id);
+            let _subtree = T::insert(&mut sp, key, nextsubtree, depth, rule_id);
             //trie.children[j] = subtree;
             //return trie; // how to return this?
             return T::new();
         }
     }
+
+/*
+// Returns true if key presents in trie, else 
+// false 
+bool search(struct TrieNode *root, string key) 
+{ 
+    struct TrieNode *pCrawl = root; 
+  
+    for (int i = 0; i < key.length(); i++) 
+    { 
+        int index = key[i] - 'a'; 
+        if (!pCrawl->children[index]) 
+            return false; 
+  
+        pCrawl = pCrawl->children[index]; 
+    } 
+  
+    return (pCrawl != NULL && pCrawl->isEndOfWord); 
+} 
+*/
+    fn search (key: &RuleMashTrieKey, trie: &RuleMashTrie) -> bool {
+        type T = RuleMashTrie;
+        let mut depth = 1;
+        let mut trie1 = trie;
+        let mut i = 0;
+        
+        if T::is_null(trie1) {
+            T::notfound(key);
+            return false;        
+        }
+
+        while i < MAX_FLAGS {
+            let idx : usize = T::charac(depth, key) as usize;
+            if idx==0 {
+                break;//end key
+            }
+            if T::is_null(&trie1.children[idx]){
+                T::notfound(key);
+                return false;
+            }
+            trie1 = &trie1.children[idx];
+            depth = depth + 1;
+            i = i + 1;
+        }
+
+        if !T::is_null(trie1) && T::is_data(trie1) {
+            T::found( trie1 );
+            return true;
+        } 
+        else {
+            T::notfound(key);
+            return false;
+        }
+    }
+
 /*
 search( key, t )
 	typekey key;
@@ -217,7 +399,7 @@ search( key, t )
 	else	notfound( key );
 	}
 */
-    fn search (key: &RuleMashTrieKey, trie: &RuleMashTrie){
+    fn search2 (key: &RuleMashTrieKey, trie: &RuleMashTrie){
         let mut depth: usize = 1;
         type T = RuleMashTrie;
         let mut trie_walk : &T = trie;
@@ -266,8 +448,109 @@ search( key, t )
 
 } //end impl RuleMastTrie
 
+
+
+pub fn semantic_producer_test(){
+    
+    let mut sp = crate::util::SemanticProducer::new();
+
+    let mut i = 0;
+    while i < 80 {
+        let mut s = String::from("fred_is_dead");
+        log56!(&mut sp, s);
+        i = i + 1;
+    }    
+
+}
+
 pub fn trie_test() {
 
+    let mut sp = SemanticProducer::new();
+
+    type T = RuleMashTrie;
+
+    let mut t = T::new();
+
+    let mut s = [0; MAX_FLAGS];
+   
+    s[0]=3;
+    let k = RuleMashTrieKey {seq :s };
+    let rule_id = 3;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+
+    s[0]=3;
+    s[1]=1;
+    let k = RuleMashTrieKey {seq :s };
+    let rule_id = 31;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+
+    s[0]=2;
+    s[1]=1;
+    let k = RuleMashTrieKey {seq :s };
+    let rule_id = 21;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+
+    s[0]=2;
+    s[1]=2;
+    let k = RuleMashTrieKey {seq :s };
+    let rule_id = 22;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+
+    s[0]=2;
+    s[1]=3;
+    let k = RuleMashTrieKey {seq :s };
+    let rule_id = 23;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+
+    s[0]=1;
+    s[1]=0;//end of key
+    let k = RuleMashTrieKey {seq :s };
+    let rule_id = 1;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+
+}
+
+
+pub fn trie_test4() {
+
+    let mut sp = SemanticProducer::new();
+
+    type T = RuleMashTrie;
+
+    let mut t = T::new();
+
+    let mut s = [0; MAX_FLAGS];
+    s[0]=2;
+    let k = RuleMashTrieKey {seq :s };
+
+    println!("***INSERT 2***");
+    let rule_id = 1;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+    T::print_node(&t);
+
+    T::print(&t, 1);
+   
+    println!("***INSERT 3***");
+    s[0]=3;
+    let k = RuleMashTrieKey {seq :s };
+    let rule_id = 2;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+
+    T::print(&t, 1);
+
+    println!("*** INSERT 3,1 ***");
+    s[0]=3;
+    s[1]=1;
+    let k = RuleMashTrieKey {seq :s };
+    let rule_id = 3;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+
+    T::print(&t, 1);
+}
+
+pub fn trie_test3() {
+    let mut sp = SemanticProducer::new();
+    
     type T = RuleMashTrie;
 
     let mut t = T::new();
@@ -279,13 +562,13 @@ pub fn trie_test() {
     T::search(&k, &t);
 
     let mut rule_id = 1;
-    T::insert(&k, &mut t, 1, rule_id);
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
 
 
     T::search(&k, &t);
 
     rule_id = 2;
-    T::insert(&k, &mut t, 1, rule_id);
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
 
     T::search(&k, &t);
     
@@ -298,11 +581,11 @@ pub fn trie_test() {
 
     println!("insert rule 3");
     rule_id = 3;
-    T::insert(&k2, &mut t, 1, rule_id);
+    T::insert(&mut sp, &k2, &mut t, 1, rule_id);
     T::search(&k2, &t);
 
     rule_id = 4;
-    T::insert(&k2, &mut t, 1, rule_id);
+    T::insert(&mut sp, &k2, &mut t, 1, rule_id);
     T::search(&k2, &t);
 
 }

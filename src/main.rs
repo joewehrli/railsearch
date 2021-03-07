@@ -1,9 +1,11 @@
 
 mod lib;
+mod util;
 
 use devtimer::DevTime;
 
 use crate::lib::trie_test;
+use crate::lib::semantic_producer_test;
 
 use crate::lib::queryterm1;
 use crate::lib::queryterm2;
@@ -25,6 +27,7 @@ use crate::lib::model5;
 
 
 fn main() {
+    // semantic_producer_test();
 
     println!("tries");
     trie_test();

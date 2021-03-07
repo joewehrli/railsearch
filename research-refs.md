@@ -5,8 +5,48 @@ https://learning-rust.github.io/docs/d1.code_organization.html
 - rust vs c performance
 https://kornel.ski/rust-c-speed
 
+- rust string iter
+https://stackoverflow.com/questions/24542115/how-to-index-a-string-in-rust
+
+- rust LMAX like ring buffer
+
+https://ferrous-systems.com/blog/lock-free-ring-buffer/#circular-buffers
+
+https://www.linuxjournal.com/content/lock-free-multi-producer-multi-consumer-queue-ring-buffer
+
+https://kmdreko.github.io/posts/20191003/a-simple-lock-free-ring-buffer/
+
+https://www.osti.gov/servlets/purl/1531271
+
+https://dzone.com/articles/ring-buffer-a-data-structure-behind-disruptor
+
+https://drops.dagstuhl.de/opus/volltexte/2019/11335/pdf/LIPIcs-DISC-2019-28.pdf
+
+https://www.baeldung.com/lmax-disruptor-concurrency
+
+https://dzone.com/articles/java-9-flow-api-vs-lmax-disruptor
+
+https://medium.com/@pvub/high-performance-event-publishing-with-disruptor-9d4d88fcfbc8
+
+https://www.youtube.com/watch?v=eTeWxZvlCZ8
+
+https://www.youtube.com/watch?v=Qho1QNbXBso
+
+https://inspirehep.net/files/a72dab46e80fa0a4c6334ef7af92b822
+
+https://accelconf.web.cern.ch/ICALEPCS2015/papers/web3o03.pdf
+
+https://programmer.ink/think/simple-practice-of-disruptor-framework.html
+
+https://logging.apache.org/log4j/2.x/manual/async.html
+
+
+
 - rust debug in vscode
 https://www.forrestthewoods.com/blog/how-to-debug-rust-with-visual-studio-code/
+
+- great rust C ABI article with LMDB as example
+http://hotforknowledge.com/2019/07/14/6-rust-the-new-c/
 
 - lib for vscode debugging
 https://github.com/vadimcn/vscode-lldb/blob/v1.6.1/MANUAL.md#rust-language-support
@@ -19,6 +59,7 @@ https://users.dcc.uchile.cl/~rbaeza/handbook/algs/3/344.ins.c.html
 
 
 - trees/dicts for the cause
+https://www.geeksforgeeks.org/trie-insert-and-search/
 https://docs.rs/trie-rs/0.1.1/trie_rs/
 https://crates.io/crates/louds-rs
 https://docs.rs/fid-rs/0.1.1/fid_rs/
@@ -81,3 +122,12 @@ https://github.com/ocornut/imgui
 - imgui in the browser
 https://github.com/jnmaloney/Webgui
 
+- kafka arch
+http://cloudurable.com/ppt/4-kafka-detailed-architecture.pdf
+
+
+- post to tyler
+https://seattlescrum.com/misconception-1-dependencies-are-caused-by-immutable-laws-of-physics/
+https://seattlescrum.com/how-is-knowledge-creation-work-different/
+    - great
+    https://www.youtube.com/watch?v=oxjT7veKi9c

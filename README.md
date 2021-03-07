@@ -18,3 +18,5 @@ made insert compile
 added print
 insert has infinite loop
 checked in with this
+
+tree insert not correct - second insert has tree ref after as null_structure
