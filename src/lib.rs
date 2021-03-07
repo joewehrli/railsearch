@@ -11,7 +11,9 @@ const MAX_RECORDS: usize = 800_000_000;
 const MAX_RECORDS: usize = 50_000;
 const MAX_QUERIES: usize = 10_000;
 
+#[cfg(foo)]
 const MAX_FLAGS: usize = 10;
+const MAX_FLAGS: usize = 4;
 
 
 macro_rules! log56 {
@@ -113,6 +115,64 @@ void print_trie(TrieNode* root) {
 }
 */
 
+fn dump_node1 (trie: &RuleMashTrie){
+    type T = RuleMashTrie;
+
+    println!("BGN dump_node1()");
+
+    println!("null_structure= {}", trie.null_structure);
+    println!("data_structure= {}", trie.data_structure);
+
+    let stuff_str = format!("{:?}", trie.k);
+    println!("key: {}", stuff_str);
+
+    let stuff_str = format!("{:?}", trie.rule_xref);
+    println!("Rule-ids= {}", stuff_str);
+
+    println!("END dump_node1()");
+}
+
+fn dump_node (trie: &RuleMashTrie){
+    type T = RuleMashTrie;
+
+    T::dump_node1(&trie);
+    println!("\ndirect children:");
+    let mut i = 0;
+    while i < MAX_FLAGS {
+        let trie1 = &trie.children[i];
+        println!("\nindex= {}", i);
+        T::dump_node1(&trie1);
+        i = i + 1;
+    }
+}
+
+//export rules to stdout
+fn dump_rules (trie: &RuleMashTrie, depth: usize){
+    type T = RuleMashTrie;
+
+    if T::is_null(trie) {
+        if depth==1 {
+            println!("No rules dep={}",depth);
+        }
+        return;
+    }
+
+    if T::is_data(trie) {
+        let k_part = format!("{:?}", trie.k.seq);
+        let q_part = format!("{:?}", trie.rule_xref);
+        println!("IF{} THEN Q{}", k_part, q_part);
+    }
+    
+    let mut i = 0;
+    while i < MAX_FLAGS {
+        T::dump_rules( &trie.children[i], depth + 1 );
+        i = i + 1;
+    }
+
+    return;
+}
+
+
 fn print (trie: &RuleMashTrie, depth: usize){
     println!("BGN print ({})", depth);
     type T = RuleMashTrie;
@@ -194,6 +254,7 @@ void insert(struct TrieNode *root, string key)
         log56!(sp,evt);
 
         let mut i = 0;
+        let mut last_idx = 0;
         while i < MAX_FLAGS {
             let idx : usize = T::charac(depth, key) as usize;
             if idx==0 {
@@ -220,7 +281,7 @@ void insert(struct TrieNode *root, string key)
             depth = depth + 1;
             i = i + 1;
         }
-        let mut loopdone = format!("INFO: loop done dep={}", depth);
+        let mut loopdone = format!("INFO: loop done dep={} idx={} i={}", depth, last_idx, i);
         log56!(sp, loopdone);
 
         trie1.null_structure=false;
@@ -477,12 +538,41 @@ pub fn trie_test() {
     let k = RuleMashTrieKey {seq :s };
     let rule_id = 3;
     T::insert(&mut sp, &k, &mut t, 1, rule_id);
+    let rule_id = 3000;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+    println!("\n******ROOT*******\n");
+    T::dump_node(&t);
+
+    
 
     s[0]=3;
     s[1]=1;
     let k = RuleMashTrieKey {seq :s };
     let rule_id = 31;
     T::insert(&mut sp, &k, &mut t, 1, rule_id);
+    let rule_id = 3100;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+
+    println!("\n******ROOT POST INS 3,1*******\n");
+    T::dump_node(&t);
+
+    println!("\n******CHILD 3 POST INS 3,1*******\n");
+    let t2=&t.children[3];
+    T::dump_node(&t2);
+
+    println!("\n******SEARCH 3*******\n");
+    s[0]=3;
+    s[1]=0;
+
+    let k = RuleMashTrieKey {seq :s };
+    T::search(&k,&t);
+
+    println!("\n******SEARCH 3,1*******\n");
+    s[0]=3;
+    s[1]=1;
+    let k = RuleMashTrieKey {seq :s };
+    T::search(&k,&t);
+
 
     s[0]=2;
     s[1]=1;
@@ -508,6 +598,54 @@ pub fn trie_test() {
     let rule_id = 1;
     T::insert(&mut sp, &k, &mut t, 1, rule_id);
 
+    s[0]=1;
+    s[1]=3;
+    let k = RuleMashTrieKey {seq :s };
+    let rule_id = 13;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+
+    // dump root
+    println!("\n******ROOT POST INS 2,1 2,2 2,3 1,3 *******\n");
+    T::dump_node(&t);
+
+    println!("\n******CHILD 2 POST INS 2,1 2,2 2,3 1,3*******\n");
+    let t2=&t.children[2];
+    T::dump_node(&t2);
+
+    println!("\n******SEARCH 2,1*******\n");
+    s[0]=2;
+    s[1]=1;
+
+    let k = RuleMashTrieKey {seq :s };
+    T::search(&k,&t);
+
+    println!("\n******SEARCH 2,2*******\n");
+    s[0]=2;
+    s[1]=2;
+    let k = RuleMashTrieKey {seq :s };
+    T::search(&k,&t);
+
+    println!("\n******SEARCH 2,3*******\n");
+    s[0]=2;
+    s[1]=3;
+    let k = RuleMashTrieKey {seq :s };
+    T::search(&k,&t);
+
+    println!("\n******SEARCH 1*******\n");
+    s[0]=1;
+    s[1]=0;
+    let k = RuleMashTrieKey {seq :s };
+    T::search(&k,&t);
+    
+    println!("\n******SEARCH 1,3*******\n");
+    s[0]=1;
+    s[1]=3;
+    let k = RuleMashTrieKey {seq :s };
+    T::search(&k,&t);
+
+    //export keys and rules
+    println!("\nrule dump");
+    T::dump_rules(&t,1);
 }
 
 

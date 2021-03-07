@@ -40,7 +40,17 @@ https://programmer.ink/think/simple-practice-of-disruptor-framework.html
 
 https://logging.apache.org/log4j/2.x/manual/async.html
 
+https://labs.eleks.com/2013/01/disruptor-net.html
 
+https://superdevelopment.com/2016/03/11/disruptor-csharp-dot-net/
+
+    - done in sql :()
+    https://chrisadkin.io/2016/01/02/super-scaling-queues-using-the-lmax-disruptor-pattern/
+
+https://www.infoq.com/presentations/financial-exchange-architecture/
+
+- single queue update pattern
+https://martinfowler.com/articles/patterns-of-distributed-systems/singular-update-queue.html
 
 - rust debug in vscode
 https://www.forrestthewoods.com/blog/how-to-debug-rust-with-visual-studio-code/
