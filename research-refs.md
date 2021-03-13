@@ -128,6 +128,9 @@ https://downloads.hindawi.com/archive/2009/736398.pdf
 - LCS video
 https://www.youtube.com/watch?v=CRge_cZ2cJc
 
+- nice RF tutorial by Sutton
+https://www.microsoft.com/en-us/research/video/tutorial-introduction-to-reinforcement-learning-with-function-approximation/
+
 - non-recursive range searches
 https://codeforces.com/blog/entry/1256
 

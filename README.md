@@ -36,4 +36,6 @@ checked in with the limitations
 adjusted libraries org (added some oldlib oldmain and setforth new cleaner)
 checked in
 adjusted to use child array position 0
+checked in
+move the trie test method to a test method
 
