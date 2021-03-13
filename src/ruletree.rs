@@ -6,7 +6,7 @@ use crate::util::SemanticProducer;
 
 #[cfg(foo)]
 const MAX_FLAGS: usize = 10;
-const MAX_FLAGS: usize = 4;
+const MAX_FLAGS: usize = 6;
 
 
 macro_rules! log56 {
@@ -237,16 +237,16 @@ impl RuleMashTrie {
             let mut looper = format!("INFO: newloop of key loop idx={} dep={}", idx, depth);
             log56!(sp, looper);
 
-            if T::is_null(&trie1.children[idx]){
+            if T::is_null(&trie1.children[T::cpos(idx)]){
                 //log
                 let mut intnode = format!("INFO: node null; new INT CHILD w/idx={}", idx);
                 log56!(sp, intnode);
 
-                T::set_interior_node(&mut trie1.children[idx]);
+                T::set_interior_node(&mut trie1.children[T::cpos(idx)]);
             }
             let mut movedeep = format!("INFO: move search to INT CHILD at idx={} dep={}", idx, depth);
             log56!(sp, movedeep);
-            trie1 = &mut trie1.children[idx];
+            trie1 = &mut trie1.children[T::cpos(idx)];
             depth = depth + 1;
             i = i + 1;
             last_idx = idx;
@@ -297,11 +297,11 @@ impl RuleMashTrie {
             if idx==0 {
                 break;//end key
             }
-            if T::is_null(&trie1.children[idx]){
+            if T::is_null(&trie1.children[T::cpos(idx)]){
                 T::notfound(key);
                 return false;
             }
-            trie1 = &trie1.children[idx];
+            trie1 = &trie1.children[T::cpos(idx)];
             depth = depth + 1;
             i = i + 1;
         }
@@ -316,13 +316,25 @@ impl RuleMashTrie {
         }
     }
 
+    // take a seq [4 3 2 1] and for dep x gives [d-1] from seq
+    // at depth 1 look at [0]=4
+    // at depth 2 look at [1]=3
+    // at depth 3 look at [2]=2
+    // at depth 4 look at [3]=1
     fn charac(depth: usize, key: &RuleMashTrieKey) -> i8{
         assert!(depth>0);
-        let idx = depth-1;
+        let idx = depth-1; 
         let val = key.seq[idx];
         return val;
     }
 
+    //map seq val to an array pos
+    //supports only positive 1,2,3... no negations terms
+    fn cpos(i:usize)-> usize {
+        i - 1
+    }
+
+    //unitialized node
     fn is_null(trie: &RuleMashTrie) -> bool {
         return trie.null_structure;
     }

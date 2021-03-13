@@ -25,7 +25,6 @@ tree insert not correct - second insert has tree ref after as null_structure
 added logging
 macro
 
-
 2021-03-07
 fixed up tree
 tested ops in detail looks good
@@ -33,6 +32,8 @@ all but the wasted 0 child array :)
 and no support for negation -x
 checked in with the limitations
 
-
-
+2021-03-13
+adjusted libraries org (added some oldlib oldmain and setforth new cleaner)
+checked in
+adjusted to use child array position 0
 

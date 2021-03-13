@@ -11,7 +11,7 @@ use ruletree::RuleMashTrieKey;
 
 #[cfg(foo)]
 const MAX_FLAGS: usize = 10;
-const MAX_FLAGS: usize = 4;
+const MAX_FLAGS: usize = 6;
 
 
     pub fn trie_test() {
@@ -49,7 +49,7 @@ const MAX_FLAGS: usize = 4;
         println!("\n******CHILD 3 POST INS 3,1*******\n");
         //let t2=&t.children[3];
         let t2=T::get_child_vec(&t);
-        T::dump_node(&t2[3]);
+        T::dump_node(&t2[3-1]);
 
         println!("\n******SEARCH 3*******\n");
         s[0]=3;
@@ -102,7 +102,7 @@ const MAX_FLAGS: usize = 4;
         println!("\n******CHILD 2 POST INS 2,1 2,2 2,3 1,3*******\n");
         //let t2=&t.children[2];
         let t2=T::get_child_vec(&t);
-        T::dump_node(&t2[2]);
+        T::dump_node(&t2[2-1]);
 
         println!("\n******SEARCH 2,1*******\n");
         s[0]=2;
