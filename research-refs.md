@@ -8,6 +8,11 @@ https://kornel.ski/rust-c-speed
 - rust string iter
 https://stackoverflow.com/questions/24542115/how-to-index-a-string-in-rust
 
+- 3d animation for ds - nice
+https://vpython.org/
+https://github.com/kovidgoyal/rapydscript-ng
+
+
 - rust LMAX like ring buffer
 
 https://ferrous-systems.com/blog/lock-free-ring-buffer/#circular-buffers
@@ -141,3 +146,5 @@ https://seattlescrum.com/misconception-1-dependencies-are-caused-by-immutable-la
 https://seattlescrum.com/how-is-knowledge-creation-work-different/
     - great
     https://www.youtube.com/watch?v=oxjT7veKi9c
+
+https://kevingosse.medium.com/performance-best-practices-in-c-b85a47bdd93a

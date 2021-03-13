@@ -28,5 +28,11 @@ macro
 
 2021-03-07
 fixed up tree
-an extra 0 index insert on second insert 3 then 3 1
+tested ops in detail looks good
+all but the wasted 0 child array :)
+and no support for negation -x
+checked in with the limitations
+
+
+
 
