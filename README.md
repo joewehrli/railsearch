@@ -64,4 +64,16 @@ a > 0
 2021-03-14
 adjusted scheme to include negative terms and adjusted units tests and passed
 checkin
+added some negative terms, tested, and added into unit test
 
+IF[1, 0, 0, 0, 0, 0, 0, 0, 0, 0] THEN Q[1]
+IF[1, 3, 0, 0, 0, 0, 0, 0, 0, 0] THEN Q[13]
+IF[2, -3, 0, 0, 0, 0, 0, 0, 0, 0] THEN Q[230000000]
+IF[2, 1, 0, 0, 0, 0, 0, 0, 0, 0] THEN Q[21]
+IF[2, 2, 0, 0, 0, 0, 0, 0, 0, 0] THEN Q[22]
+IF[2, 3, 0, 0, 0, 0, 0, 0, 0, 0] THEN Q[23]
+IF[3, 0, 0, 0, 0, 0, 0, 0, 0, 0] THEN Q[3, 3000]
+IF[3, -1, 0, 0, 0, 0, 0, 0, 0, 0] THEN Q[310000000, 3100000002]
+IF[3, 1, 0, 0, 0, 0, 0, 0, 0, 0] THEN Q[31, 3100]
+
+checkin

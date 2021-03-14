@@ -47,6 +47,20 @@ pub fn run_trie() {
     println!("\n******ROOT POST INS 3,1*******\n");
     T::dump_node(&t);
 
+
+    s[0]=3;
+    s[1]=-1;
+    let k = RuleMashTrieKey {seq :s };
+    let rule_id = 310000000;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+    let rule_id = 3100000002;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+
+    println!("\n******ROOT POST INS 3,-1*******\n");
+    T::dump_node(&t);
+
+
+
     println!("\n******CHILD 3 POST INS 3,1*******\n");
     //let t2=&t.children[3];
     let t2=T::get_child_vec(&t);
@@ -57,6 +71,8 @@ pub fn run_trie() {
     let i2 = T::ncpos(i);
     //T::dump_node(&t2[3-1]);
     T::dump_node(&t2[i2]);
+
+
 
 
 
@@ -74,6 +90,15 @@ pub fn run_trie() {
     let k = RuleMashTrieKey {seq :s };
     let sr = T::search(&k,&t);
     assert!(sr); 
+
+    println!("\n******SEARCH 3,-1*******\n");
+    s[0]=3;
+    s[1]=-1;
+    let k = RuleMashTrieKey {seq :s };
+    let sr = T::search(&k,&t);
+    assert!(sr); 
+
+
 
     s[0]=2;
     s[1]=1;
@@ -93,6 +118,13 @@ pub fn run_trie() {
     let rule_id = 23;
     T::insert(&mut sp, &k, &mut t, 1, rule_id);
 
+    s[0]=2;
+    s[1]=-3;
+    let k = RuleMashTrieKey {seq :s };
+    let rule_id = 230000000;
+    T::insert(&mut sp, &k, &mut t, 1, rule_id);
+
+
     s[0]=1;
     s[1]=0;//end of key
     let k = RuleMashTrieKey {seq :s };
@@ -106,10 +138,10 @@ pub fn run_trie() {
     T::insert(&mut sp, &k, &mut t, 1, rule_id);
 
     // dump root
-    println!("\n******ROOT POST INS 2,1 2,2 2,3 1,3 *******\n");
+    println!("\n******ROOT POST INS 2,1 2,2 2,3 2,-3 1,3 *******\n");
     T::dump_node(&t);
 
-    println!("\n******CHILD 2 POST INS 2,1 2,2 2,3 1,3*******\n");
+    println!("\n******CHILD 2 POST INS 2,1 2,2 2,3 2,-3 1,3*******\n");
     //let t2=&t.children[2];
     let t2=T::get_child_vec(&t);
     s[0]=2;
@@ -141,6 +173,14 @@ pub fn run_trie() {
     let k = RuleMashTrieKey {seq :s };
     let sr = T::search(&k,&t);
     assert!(sr);
+
+    println!("\n******SEARCH 2,-3*******\n");
+    s[0]=2;
+    s[1]=-3;
+    let k = RuleMashTrieKey {seq :s };
+    let sr = T::search(&k,&t);
+    assert!(sr);
+
 
     println!("\n******SEARCH 1*******\n");
     s[0]=1;
