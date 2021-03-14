@@ -131,6 +131,10 @@ https://www.youtube.com/watch?v=CRge_cZ2cJc
 - nice RF tutorial by Sutton
 https://www.microsoft.com/en-us/research/video/tutorial-introduction-to-reinforcement-learning-with-function-approximation/
 
+- AI journal free/open
+https://www.ijcai.org/proceedings/2020/
+
+
 - non-recursive range searches
 https://codeforces.com/blog/entry/1256
 

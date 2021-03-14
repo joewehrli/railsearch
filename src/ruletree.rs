@@ -1,12 +1,10 @@
 #![allow(dead_code)]
 
-
+use std::convert::TryInto;
 use crate::util::SemanticProducer;
 
 
-#[cfg(foo)]
 const MAX_FLAGS: usize = 10;
-const MAX_FLAGS: usize = 6;
 
 
 macro_rules! log56 {
@@ -225,7 +223,7 @@ impl RuleMashTrie {
         let mut i = 0;
         let mut last_idx = 0;
         while i < MAX_FLAGS {
-            let idx : usize = T::charac(depth, key) as usize;
+            let idx = T::charac(depth, key);
             if idx==0 {
                 //log
                 let mut evt = format!("INFO: Exit key loop;terminal key idx={} dep={}", idx, depth);
@@ -237,16 +235,16 @@ impl RuleMashTrie {
             let mut looper = format!("INFO: newloop of key loop idx={} dep={}", idx, depth);
             log56!(sp, looper);
 
-            if T::is_null(&trie1.children[T::cpos(idx)]){
+            if T::is_null(&trie1.children[T::ncpos(idx)]){
                 //log
                 let mut intnode = format!("INFO: node null; new INT CHILD w/idx={}", idx);
                 log56!(sp, intnode);
 
-                T::set_interior_node(&mut trie1.children[T::cpos(idx)]);
+                T::set_interior_node(&mut trie1.children[T::ncpos(idx)]);
             }
             let mut movedeep = format!("INFO: move search to INT CHILD at idx={} dep={}", idx, depth);
             log56!(sp, movedeep);
-            trie1 = &mut trie1.children[T::cpos(idx)];
+            trie1 = &mut trie1.children[T::ncpos(idx)];
             depth = depth + 1;
             i = i + 1;
             last_idx = idx;
@@ -293,15 +291,15 @@ impl RuleMashTrie {
         }
 
         while i < MAX_FLAGS {
-            let idx : usize = T::charac(depth, key) as usize;
+            let idx = T::charac(depth, key);
             if idx==0 {
                 break;//end key
             }
-            if T::is_null(&trie1.children[T::cpos(idx)]){
+            if T::is_null(&trie1.children[T::ncpos(idx)]){
                 T::notfound(key);
                 return false;
             }
-            trie1 = &trie1.children[T::cpos(idx)];
+            trie1 = &trie1.children[T::ncpos(idx)];
             depth = depth + 1;
             i = i + 1;
         }
@@ -321,7 +319,7 @@ impl RuleMashTrie {
     // at depth 2 look at [1]=3
     // at depth 3 look at [2]=2
     // at depth 4 look at [3]=1
-    fn charac(depth: usize, key: &RuleMashTrieKey) -> i8{
+    pub fn charac(depth: usize, key: &RuleMashTrieKey) -> i8{
         assert!(depth>0);
         let idx = depth-1; 
         let val = key.seq[idx];
@@ -330,8 +328,35 @@ impl RuleMashTrie {
 
     //map seq val to an array pos
     //supports only positive 1,2,3... no negations terms
-    fn cpos(i:usize)-> usize {
-        i - 1
+    fn cpos(i:i8)-> usize {
+        let i_max_flags : i8 = MAX_FLAGS.try_into().unwrap();
+        assert!(i>0);
+        let r = i - 1;
+        assert!(r>=0 && r<i_max_flags);
+        let r0 : usize = r.try_into().unwrap();
+        r0
+    }
+
+    //map seq val to an array pos
+    //supports negative and positive -3,-2,-1, 1,2,3... handles negations terms
+    pub fn ncpos(seqval:i8)-> usize {
+        let i = seqval;
+        let i_max_flags : i8 = MAX_FLAGS.try_into().unwrap();
+        assert!(i_max_flags % 2 == 0); // MAX_FLAGS must be even
+        assert!(i>=(-i_max_flags/2));  // must be in alphabet
+        assert!(i<=(i_max_flags/2));  // must be in alphabet
+        assert!(i != 0);            // must be in alphabet
+        let r;
+        let mid = i_max_flags/2;
+        if i < 0 {
+            r = i + mid;
+        }
+        else { //i > 0
+            r = i + mid - 1;
+        }
+        assert!(r>=0 && r<i_max_flags);
+        let r0 : usize = r.try_into().unwrap();
+        r0
     }
 
     //unitialized node
@@ -376,8 +401,43 @@ pub fn semantic_producer_test(){
 
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
+
     use super::*;
+
+    #[test]
+    pub fn ncpos_test() {
+        //works with usized = 6
+        /*
+        type T = RuleMashTrie;
+        let r = T::ncpos(-5);
+        assert!(r==0);
+        let r = T::ncpos(-4);
+        assert!(r==1);
+        let r = T::ncpos(-3);
+        assert!(r==2);
+        let r = T::ncpos(3);
+        assert!(r==3);
+        let r = T::ncpos(4);
+        assert!(r==4);
+        let r = T::ncpos(5);
+        assert!(r==5);
+*/
+        //works with usized = 10
+        type T = RuleMashTrie;
+        let r = T::ncpos(-5);
+        assert!(r==0);
+        let r = T::ncpos(-4);
+        assert!(r==1);
+        let r = T::ncpos(-3);
+        assert!(r==2);
+        let r = T::ncpos(3);
+        assert!(r==7);
+        let r = T::ncpos(4);
+        assert!(r==8);
+        let r = T::ncpos(5);
+        assert!(r==9);
+    }
 
     #[test]
     pub fn trie_test() {
@@ -385,9 +445,9 @@ mod tests {
         let mut sp = SemanticProducer::new();
 
         type T = RuleMashTrie;
-
+    
         let mut t = T::new();
-
+    
         let mut s = [0; MAX_FLAGS];
     
         s[0]=3;
@@ -399,7 +459,7 @@ mod tests {
         println!("\n******ROOT*******\n");
         T::dump_node(&t);
         
-
+    
         s[0]=3;
         s[1]=1;
         let k = RuleMashTrieKey {seq :s };
@@ -407,105 +467,119 @@ mod tests {
         T::insert(&mut sp, &k, &mut t, 1, rule_id);
         let rule_id = 3100;
         T::insert(&mut sp, &k, &mut t, 1, rule_id);
-
+    
         println!("\n******ROOT POST INS 3,1*******\n");
         T::dump_node(&t);
-
+    
         println!("\n******CHILD 3 POST INS 3,1*******\n");
         //let t2=&t.children[3];
         let t2=T::get_child_vec(&t);
-        T::dump_node(&t2[3-1]);
-
+        s[0]=3;
+        s[1]=0;
+        let k = RuleMashTrieKey {seq :s };
+        let i = T::charac(1, &k);
+        let i2 = T::ncpos(i);
+        //T::dump_node(&t2[3-1]);
+        T::dump_node(&t2[i2]);
+    
+    
+    
         println!("\n******SEARCH 3*******\n");
         s[0]=3;
         s[1]=0;
-
+    
         let k = RuleMashTrieKey {seq :s };
         let sr = T::search(&k,&t);
         assert!(sr);
- 
+    
         println!("\n******SEARCH 3,1*******\n");
         s[0]=3;
         s[1]=1;
         let k = RuleMashTrieKey {seq :s };
         let sr = T::search(&k,&t);
         assert!(sr); 
-
+    
         s[0]=2;
         s[1]=1;
         let k = RuleMashTrieKey {seq :s };
         let rule_id = 21;
         T::insert(&mut sp, &k, &mut t, 1, rule_id);
-
+    
         s[0]=2;
         s[1]=2;
         let k = RuleMashTrieKey {seq :s };
         let rule_id = 22;
         T::insert(&mut sp, &k, &mut t, 1, rule_id);
-
+    
         s[0]=2;
         s[1]=3;
         let k = RuleMashTrieKey {seq :s };
         let rule_id = 23;
         T::insert(&mut sp, &k, &mut t, 1, rule_id);
-
+    
         s[0]=1;
         s[1]=0;//end of key
         let k = RuleMashTrieKey {seq :s };
         let rule_id = 1;
         T::insert(&mut sp, &k, &mut t, 1, rule_id);
-
+    
         s[0]=1;
         s[1]=3;
         let k = RuleMashTrieKey {seq :s };
         let rule_id = 13;
         T::insert(&mut sp, &k, &mut t, 1, rule_id);
-
+    
         // dump root
         println!("\n******ROOT POST INS 2,1 2,2 2,3 1,3 *******\n");
         T::dump_node(&t);
-
+    
         println!("\n******CHILD 2 POST INS 2,1 2,2 2,3 1,3*******\n");
         //let t2=&t.children[2];
         let t2=T::get_child_vec(&t);
-        T::dump_node(&t2[2-1]);
-
+        s[0]=2;
+        s[1]=0;
+        let k = RuleMashTrieKey {seq :s };
+        let i = T::charac(1, &k);
+        let i2 = T::ncpos(i);
+        //T::dump_node(&t2[2-1]);
+        T::dump_node(&t2[i2]);
+    
         println!("\n******SEARCH 2,1*******\n");
         s[0]=2;
         s[1]=1;
-
+    
         let k = RuleMashTrieKey {seq :s };
         let sr = T::search(&k,&t);
         assert!(sr);
-
+    
         println!("\n******SEARCH 2,2*******\n");
         s[0]=2;
         s[1]=2;
         let k = RuleMashTrieKey {seq :s };
         let sr = T::search(&k,&t);
         assert!(sr);
-
+    
         println!("\n******SEARCH 2,3*******\n");
         s[0]=2;
         s[1]=3;
         let k = RuleMashTrieKey {seq :s };
         let sr = T::search(&k,&t);
         assert!(sr);
-
+    
         println!("\n******SEARCH 1*******\n");
         s[0]=1;
         s[1]=0;
         let k = RuleMashTrieKey {seq :s };
         let sr = T::search(&k,&t);
         assert!(sr);
-
+    
         println!("\n******SEARCH 1,3*******\n");
         s[0]=1;
         s[1]=3;
         let k = RuleMashTrieKey {seq :s };
         let sr = T::search(&k,&t);
         assert!(sr);
-
+    
         //export keys and rules
         println!("\nrule dump");
         T::dump_rules(&t,1);
