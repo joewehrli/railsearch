@@ -3,20 +3,26 @@
 use std::convert::TryInto;
 use crate::util::SemanticProducer;
 
+//2^32 or 4,294,967,296 unique query combinations
+pub const MAX_SYM: usize = 32;
 
-const MAX_FLAGS: usize = 10;
+// min of 2^32 or 4,294,967,296 of unique data records
+// not a real max just limitation of ability to query all attributes
+// data bits same as # of symbols because contradictions don't need to be expressed, saving 1/2 bits
+//pub const MAX_INFO: usize = MAX_SYM;
+pub const MAX_INFO: usize = 16;
 
-
-macro_rules! log56 {
+macro_rules! log_evt {
     ( $( $x:expr, $y:expr ), *) => {
         {
             $(
-                SemanticProducer::pad56(&mut $y);
-                SemanticProducer::produce56($x, $y.as_bytes());
+                SemanticProducer::pad248(&mut $y);
+                SemanticProducer::produce248($x, $y.as_bytes());
             )*
         }
     };    
 }
+
 
 // a sequence of signed integers is the key
 // seq 1,2,5 represents the rule/query body Pn if r1,r2,r5 
@@ -28,11 +34,11 @@ macro_rules! log56 {
 
 #[derive(Debug, Clone, Copy)]
 pub struct RuleMashTrieKey{
-    pub seq :[i8; MAX_FLAGS]
+    pub seq :[i8; MAX_SYM]
 }
 
 // a trie like structure that mashes together business rules for mashed evaluation
-//MAX_FLAGS = alphabet of size 10; 10 means rules <1,10> with index <0,9>
+//MAX_SYM = alphabet of size 10; 10 means rules <1,10> with index <0,9>
 
 #[derive(Clone)]
 pub struct RuleMashTrie {
@@ -44,14 +50,146 @@ pub struct RuleMashTrie {
 }
 
 impl RuleMashTrie {
+    //evaluation function
+    //eval_fn : bitstring -> list_of_satisfied_queries
+    pub fn eval(sp: &mut SemanticProducer, trie: &RuleMashTrie, data : &[bool; MAX_INFO]) {
+        type T = RuleMashTrie;
+        type K = RuleMashTrieKey;
+        
+        let s1 = [0; MAX_SYM];
+        let mut s:K = K{
+            seq : s1
+        };
 
+        if T::is_null(trie) {
+            println!("Empty Rule Tree");
+            return;
+        }
+
+        //concert bit data into its equivelent query
+        //t,f,t -> 1,-2,3
+        let mut i:i8 = 0;    
+        let i_max_info = MAX_INFO.try_into().unwrap();
+        while i < i_max_info {
+            let iu:usize = i.try_into().unwrap();
+            if data[iu] {
+                s.seq[iu]=i+1;
+            }
+            else{
+                s.seq[iu]=-(i+1);
+            }
+            i = i + 1;
+        }
+        let stuff_str = format!("rule-equiv={:?}", s.seq);
+        println!("{}",stuff_str);
+
+        let mut evt = String::from("EVAL-BITS: ");
+        let k = format!("eval bit data converted to: {:?}", s.seq);
+        evt.push_str(&k);
+        log_evt!(sp, evt);
+
+        //initialize the search edges
+        let mut successor = Vec::<&RuleMashTrie>::new();
+        let mut i = 0;
+        while i < MAX_SYM {
+            let a = s.seq[i];
+            if a==0 { 
+                break;
+            }
+            let b = T::ncpos(a);
+            if !T::is_null(&trie.children[b]){
+
+                let mut evt = String::from("EVAL-BITS-PUSH-INIT-SUCCESSOR: ");
+                let k = format!("idx: {:?} ncpos: {:?}", a, b);
+                evt.push_str(&k);
+                log_evt!(sp, evt);
+
+                successor.push(&trie.children[b]);
+            }
+            i = i + 1;
+        }
+
+        //search
+        loop {
+            if successor.len() ==0 
+            {
+                return;// done with exploration
+            }
+            let trie1 = successor.pop().unwrap();
+
+            if T::is_null(trie1){
+                let mut evt = String::from("EVAL-BITS-POP-SUCCESSOR: ");
+                let k = format!("null node");
+                evt.push_str(&k);
+                log_evt!(sp, evt);    
+            }
+            else if T::is_data(trie1){
+                let mut evt = String::from("EVAL-BITS-POP-SUCCESSOR: ");
+                let k = format!("data node");
+                evt.push_str(&k);
+                log_evt!(sp, evt);    
+            }
+            else{
+                let mut evt = String::from("EVAL-BITS-POP-SUCCESSOR: ");
+                let k = format!("interior node w/o data");
+                evt.push_str(&k);
+                log_evt!(sp, evt);
+            }
+            
+
+            // Q. what is the goal test? A. bag any queries here as they are true
+            if T::is_data(trie1){
+                let k_part = format!("{:?}", trie1.k.seq);
+                let q_part = format!("{:?}", trie1.rule_xref);
+                println!("IF{} THEN Q{}", k_part, q_part);
+            }
+            //expand search
+            let mut i = 0;
+            while i < MAX_SYM {
+                let a = s.seq[i];
+                if a==0 { 
+                    break;
+                }
+                let b = T::ncpos(a);
+                if !T::is_null(&trie1.children[b]){
+                    let new_successor = &trie1.children[b];
+                    
+                    if T::is_data(new_successor){
+                        let mut evt = String::from("EVAL-BITS-PUSH-NEW-SUCCESSOR: ");
+                        let k = format!("idx: {:?} ncpos: {:?} ", a, b);
+                        let k2 = format!("rule_xref{:?}", new_successor.rule_xref);
+                        evt.push_str(&k);
+                        evt.push_str(&k2);
+                        log_evt!(sp, evt);
+                    }
+                    else {
+                        let mut evt = String::from("EVAL-BITS-PUSH-NEW-SUCCESSOR: ");
+                        let k = format!("idx: {:?} ncpos: {:?} ", a, b);
+                        let k2 = format!("no data interior");
+                        evt.push_str(&k);
+                        evt.push_str(&k2);
+                        log_evt!(sp, evt);
+                    }
+                    
+                    successor.push(new_successor);
+
+                }
+                i = i + 1;
+            }
+        }
+
+    }
+
+
+    //share the kids
     pub fn get_child_vec(t: &RuleMashTrie) -> &Vec<RuleMashTrie>{
         return &t.children;
     }
 
+    //create a null node
     pub fn new() -> Self {
 
-        let s = [0; MAX_FLAGS];
+        let s = [0; MAX_SYM];
         let x = RuleMashTrieKey {seq :s };
 
         RuleMashTrie { 
@@ -63,11 +201,12 @@ impl RuleMashTrie {
           }
     }
 
+    //initialize a node
     pub fn set_interior_node(trie: &mut RuleMashTrie){
         trie.null_structure=false;
         trie.data_structure = false;
         let new_mash = RuleMashTrie::new();
-        trie.children = vec![new_mash; MAX_FLAGS];
+        trie.children = vec![new_mash; MAX_SYM];
     }
 
     
@@ -95,7 +234,7 @@ impl RuleMashTrie {
         T::dump_node1(&trie);
         println!("\ndirect children:");
         let mut i = 0;
-        while i < MAX_FLAGS {
+        while i < MAX_SYM {
             let trie1 = &trie.children[i];
             println!("\nindex= {}", i);
             T::dump_node1(&trie1);
@@ -121,7 +260,7 @@ impl RuleMashTrie {
         }
         
         let mut i = 0;
-        while i < MAX_FLAGS {
+        while i < MAX_SYM {
             T::dump_rules( &trie.children[i], depth + 1 );
             i = i + 1;
         }
@@ -161,7 +300,7 @@ impl RuleMashTrie {
         }
         else {
             let mut i = 0;
-            while i < MAX_FLAGS {
+            while i < MAX_SYM {
                 T::print( &trie.children[i], depth + 1 );
                 i = i + 1;
             }
@@ -200,7 +339,7 @@ impl RuleMashTrie {
         let mut evt = String::from("ADD-RULE: ");
         evt.push_str(&r);
         evt.push_str(&k);
-        log56!(sp, evt);
+        log_evt!(sp, evt);
 
 
         let mut trie1 = trie;
@@ -208,56 +347,56 @@ impl RuleMashTrie {
 
         if T::is_null(&trie1) {
             let new_mash = RuleMashTrie::new();
-            trie1.children = vec![new_mash; MAX_FLAGS];
+            trie1.children = vec![new_mash; MAX_SYM];
             trie1.rule_xref.push(0);
             trie1.null_structure=false;
             //log
             let mut evt = String::from("INFO: Empty tree");
-            log56!(sp, evt);
+            log_evt!(sp, evt);
         }
 
         //log
         let mut evt = String::from("INFO: Begin key loop");
-        log56!(sp,evt);
+        log_evt!(sp,evt);
 
         let mut i = 0;
         let mut last_idx = 0;
-        while i < MAX_FLAGS {
+        while i < MAX_SYM {
             let idx = T::charac(depth, key);
             if idx==0 {
                 //log
                 let mut evt = format!("INFO: Exit key loop;terminal key idx={} dep={}", idx, depth);
-                log56!(sp, evt);
+                log_evt!(sp, evt);
 
                 break;//end key
             }
             //log
             let mut looper = format!("INFO: newloop of key loop idx={} dep={}", idx, depth);
-            log56!(sp, looper);
+            log_evt!(sp, looper);
 
             if T::is_null(&trie1.children[T::ncpos(idx)]){
                 //log
                 let mut intnode = format!("INFO: node null; new INT CHILD w/idx={}", idx);
-                log56!(sp, intnode);
+                log_evt!(sp, intnode);
 
                 T::set_interior_node(&mut trie1.children[T::ncpos(idx)]);
             }
             let mut movedeep = format!("INFO: move search to INT CHILD at idx={} dep={}", idx, depth);
-            log56!(sp, movedeep);
+            log_evt!(sp, movedeep);
             trie1 = &mut trie1.children[T::ncpos(idx)];
             depth = depth + 1;
             i = i + 1;
             last_idx = idx;
         }
         let mut loopdone = format!("INFO: loop done dep={} last_idx={} i={}", depth, last_idx, i);
-        log56!(sp, loopdone);
+        log_evt!(sp, loopdone);
 
         trie1.null_structure=false;
         trie1.data_structure=true;
         trie1.rule_xref.push(rule_id);
         trie1.k = *key;
         let mut loopdone2 = format!("INFO: set data node dep={} rule={}", depth, rule_id);
-        log56!(sp, loopdone2);
+        log_evt!(sp, loopdone2);
     }
 
     /*
@@ -290,7 +429,7 @@ impl RuleMashTrie {
             return false;        
         }
 
-        while i < MAX_FLAGS {
+        while i < MAX_SYM {
             let idx = T::charac(depth, key);
             if idx==0 {
                 break;//end key
@@ -329,10 +468,10 @@ impl RuleMashTrie {
     //map seq val to an array pos
     //supports only positive 1,2,3... no negations terms
     fn cpos(i:i8)-> usize {
-        let i_max_flags : i8 = MAX_FLAGS.try_into().unwrap();
+        let i_max_sym : i8 = MAX_SYM.try_into().unwrap();
         assert!(i>0);
         let r = i - 1;
-        assert!(r>=0 && r<i_max_flags);
+        assert!(r>=0 && r<i_max_sym);
         let r0 : usize = r.try_into().unwrap();
         r0
     }
@@ -341,20 +480,20 @@ impl RuleMashTrie {
     //supports negative and positive -3,-2,-1, 1,2,3... handles negations terms
     pub fn ncpos(seqval:i8)-> usize {
         let i = seqval;
-        let i_max_flags : i8 = MAX_FLAGS.try_into().unwrap();
-        assert!(i_max_flags % 2 == 0); // MAX_FLAGS must be even
-        assert!(i>=(-i_max_flags/2));  // must be in alphabet
-        assert!(i<=(i_max_flags/2));  // must be in alphabet
+        let i_max_sym : i8 = MAX_SYM.try_into().unwrap();
+        assert!(i_max_sym % 2 == 0); // MAX_SYM must be even
+        assert!(i>=(-i_max_sym/2));  // must be in alphabet
+        assert!(i<=(i_max_sym/2));  // must be in alphabet
         assert!(i != 0);            // must be in alphabet
         let r;
-        let mid = i_max_flags/2;
+        let mid = i_max_sym/2;
         if i < 0 {
             r = i + mid;
         }
         else { //i > 0
             r = i + mid - 1;
         }
-        assert!(r>=0 && r<i_max_flags);
+        assert!(r>=0 && r<i_max_sym);
         let r0 : usize = r.try_into().unwrap();
         r0
     }
@@ -394,7 +533,7 @@ pub fn semantic_producer_test(){
     let mut i = 0;
     while i < 80 {
         let mut s = String::from("fred_is_dead");
-        log56!(&mut sp, s);
+        log_evt!(&mut sp, s);
         i = i + 1;
     }
 }
@@ -424,6 +563,8 @@ pub mod tests {
         assert!(r==5);
 */
         //works with usized = 10
+        //comment out for production use higher than 10
+        /*
         type T = RuleMashTrie;
         let r = T::ncpos(-5);
         assert!(r==0);
@@ -437,6 +578,7 @@ pub mod tests {
         assert!(r==8);
         let r = T::ncpos(5);
         assert!(r==9);
+        */
     }
 
     #[test]
@@ -448,7 +590,7 @@ pub mod tests {
     
         let mut t = T::new();
     
-        let mut s = [0; MAX_FLAGS];
+        let mut s = [0; MAX_SYM];
     
         s[0]=3;
         let k = RuleMashTrieKey {seq :s };

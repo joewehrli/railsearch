@@ -54,6 +54,70 @@ impl SemanticProducer {
         sp.file_ref.write_all(event_data);
     }
 
+    //mutables arg - avoid copy
+    //120 data goes to 128 bytes fixed record length
+    pub fn pad120(event_user_data : &mut String) { 
+        let byte_len = event_user_data.len(); // byte len - not char count
+        //println!("byte_len1={}",byte_len);
+        assert!(byte_len <= 120); // in bytes not char count
+        let i = byte_len;
+
+        let s = String::from(" ");
+        let add = 128 - i - 1;
+        let s2 = s.repeat(add);
+        event_user_data.push_str(&s2);
+        
+        let byte_len = event_user_data.len(); // byte len - not char count
+        //println!("byte_len2={}",byte_len);
+        assert!(byte_len == 127); // in bytes not char count
+
+        event_user_data.push('\n');//linux only - windows needs \r\n
+        let byte_len = event_user_data.len(); // byte len - not char count
+        //println!("byte_len3={}",byte_len);
+        assert!(byte_len == 128); // in bytes not char count
+    }
+
+    pub fn produce120(sp : &mut SemanticProducer, event_data : &[u8])  {
+        let byte_len = event_data.len();
+        assert!(byte_len == 128); // in bytes not char count
+        //let mut f = sp.file_ref;
+        //f.write_all(event_data);
+        sp.file_ref.write_all(event_data);
+    }
+
+
+    //mutables arg - avoid copy
+    //248 data goes to 256 bytes fixed record length
+    pub fn pad248(event_user_data : &mut String) { 
+        let byte_len = event_user_data.len(); // byte len - not char count
+        //println!("byte_len1={}",byte_len);
+        assert!(byte_len <= 248); // in bytes not char count
+        let i = byte_len;
+
+        let s = String::from(" ");
+        let add = 256 - i - 1;
+        let s2 = s.repeat(add);
+        event_user_data.push_str(&s2);
+        
+        let byte_len = event_user_data.len(); // byte len - not char count
+        //println!("byte_len2={}",byte_len);
+        assert!(byte_len == 255); // in bytes not char count
+
+        event_user_data.push('\n');//linux only - windows needs \r\n
+        let byte_len = event_user_data.len(); // byte len - not char count
+        //println!("byte_len3={}",byte_len);
+        assert!(byte_len == 256); // in bytes not char count
+    }
+
+    pub fn produce248(sp : &mut SemanticProducer, event_data : &[u8])  {
+        let byte_len = event_data.len();
+        assert!(byte_len == 256); // in bytes not char count
+        //let mut f = sp.file_ref;
+        //f.write_all(event_data);
+        sp.file_ref.write_all(event_data);
+    }
+
+
 /*
 0 	1 	
 1 	2 	

@@ -88,3 +88,72 @@ R (null)-> 1,2,5
         7 -> 8
 ```
 
+evaluation function
+eval_fn : bitstring -> list_of_satisfied_queries
+
+
+brute force railsearch
+O( Nd * lg(Nq) )
+where 
+Nd is size of data rail
+Nq is size of queries, deduped
+
+data d
+    (1, 2, 3, 4)
+    (t, f, t, f)
+
+eval of [1,2,0,0] -> f
+    d[1] -> t
+    d[2] -> f
+        
+eval of [1,-2,0,0] -> t
+    d[1] -> t
+    !d[2] -> t
+
+eval of [1,-2,3,0] -> t
+    d[1] -> t
+    !d[2] -> t
+    d[3] -> t
+
+eval of [1,-2,3,-4] -> t
+    d[1] -> t
+    !d[2] -> t
+    d[3] -> t
+    !d[4] -> t
+
+eval of [1,-2,-3,-4] -> f
+    d[1] -> t
+    !d[2] -> t
+    !d[3] -> f
+    !d[4] -> t
+
+
+    idx
+    (-2, -1, 1, 2)
+    
+    rule rules:
+
+    [0,0,0,0] - null rule; universal tautalogy
+
+    contradiction
+    [-1,1,0,0]
+    [-1,1,2,0]
+    [-2,2,0,0]
+
+    equivalence
+    [1,2,0,0] 
+    [2,1,0,0]
+
+    [-1,2,0,0] 
+    [2,-1,0,0]
+
+    inverse
+    [1,0,0,0] 
+    [-1,0,0,0]
+
+    [1,2,0,0] 
+    [-1,-2,0,0]
+
+are trees smaller/optimal when rules are ordered ??
+does the best mechnical sympathy with cpu registers/access and path predict occur when we order by abs value ??
+

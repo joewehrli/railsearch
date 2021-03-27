@@ -11,10 +11,9 @@ mod ruletree;
 use crate::util::SemanticProducer;
 use ruletree::RuleMashTrie;
 use ruletree::RuleMashTrieKey;
+use ruletree::MAX_SYM;
+use ruletree::MAX_INFO;
 
-
-
-const MAX_FLAGS: usize = 10;
 
 pub fn run_trie() {
 
@@ -24,7 +23,7 @@ pub fn run_trie() {
 
     let mut t = T::new();
 
-    let mut s = [0; MAX_FLAGS];
+    let mut s = [0; MAX_SYM];
 
     s[0]=3;
     let k = RuleMashTrieKey {seq :s };
@@ -199,4 +198,12 @@ pub fn run_trie() {
     //export keys and rules
     println!("\nrule dump");
     T::dump_rules(&t,1);
+
+    //test eval against
+    println!("\nmatch bits=[t,t,f,f,f,...");
+    let mut bits = [false; MAX_INFO];
+    bits[0]=true;
+    bits[1]=true;
+    T::eval(&mut sp, &t, &bits);
+
 }
